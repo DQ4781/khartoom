@@ -1,6 +1,3 @@
-import jq
-
-
 def lambda_handler(event, context):
     # Placeholder: Retrieve JQ expression from event or configuration
     jq_expression = ".key"
