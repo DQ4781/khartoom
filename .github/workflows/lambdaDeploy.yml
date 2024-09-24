@@ -3,10 +3,7 @@ name: Deploy to Multiple Lambdas
 on:
   push:
     branches:
-      - danque # TODO: switch this to main when merging
-    paths: # only trigger deployments if anything inside a sub-folder actually has changes
-      - "ingestion-service/**"
-      - "configuration-service/**"
+      - danque # Trigger on any push to the 'danque' branch
 
 jobs:
   ###############################
