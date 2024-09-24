@@ -1,0 +1,68 @@
+name: Deploy to Multiple Lambdas
+
+on:
+  push:
+    branches:
+      - danque # TODO: switch this to main when merging
+    paths: # only trigger deployments if anything inside a sub-folder actually has changes
+      - "ingestion-service/**"
+      - "configuration-service/**"
+
+jobs:
+  ###############################
+  #   Ingestion Service
+  ###############################
+  deploy-ingestion:
+    if: contains(github.event.head_commit.message, 'ingestion-service') || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install AWS CLI
+        run: sudo apt-get install awscli
+
+      - name: Zip Ingestion Lambda
+        run: |
+          cd ingestion-service
+          zip -r ../ingestion.zip .
+          cd ..
+
+      - name: Deploy Ingestion Lambda
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_INGESTION }} \
+            --zip-file fileb://ingestion.zip
+
+  ###############################
+  #   Configuration Service
+  ###############################
+  deploy-configuration:
+    if: contains(github.event.head_commit.message, 'configuration-service') || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install AWS CLI
+        run: sudo apt-get install awscli
+
+      - name: Zip Configuration Lambda
+        run: |
+          cd configuration-service
+          zip -r ../configuration.zip .
+          cd ..
+
+      - name: Deploy Configuration Lambda
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_CONFIGURATION }} \
+            --zip-file fileb://configuration.zip
