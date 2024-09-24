@@ -10,7 +10,7 @@ def lambda_handler(event, context):
     user_id = body["UserID"]
     data = body["data"]
 
-    # Fetch configuration from our DynamoDB
+    # Fetch configuration from our DynamoDB table
     try:
         response = table.get_item(Key={"UserID": user_id})
         if "Item" not in response:
