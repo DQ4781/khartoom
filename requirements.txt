@@ -1,4 +1,4 @@
 Flask==2.0.2
 boto3==1.20.24
 pytest
-moto==4.0.12
+moto
