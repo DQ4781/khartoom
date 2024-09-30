@@ -2,7 +2,7 @@ import os
 import json
 import boto3
 
-dynamodb = boto3.resource("dynamodb", region=os.getenv("AWS_REGION", "us-west-2"))
+dynamodb = boto3.resource("dynamodb", region_name=os.getenv("AWS_REGION", "us-west-2"))
 table = dynamodb.Table("UserConfiguration")
 
 
