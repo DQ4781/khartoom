@@ -1,0 +1,66 @@
+name: Deploy to Multiple Lambdas
+
+on:
+  push:
+    branches:
+      - main
+    paths: # Only trigger deployments if there are changes in the specific folders
+      - "ingestion-service/**"
+      - "configuration-service/**"
+
+jobs:
+  ###############################
+  #   Ingestion Service
+  ###############################
+  deploy-ingestion:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Zip Ingestion Lambda
+        run: |
+          cd ingestion-service
+          zip -r ../ingestion.zip .
+          cd ..
+
+      - name: Deploy Ingestion Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_INGESTION }} \
+            --zip-file fileb://ingestion.zip
+
+  ###############################
+  #   Configuration Service
+  ###############################
+  deploy-configuration:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Zip Configuration Lambda
+        run: |
+          cd configuration-service
+          zip -r ../configuration.zip .
+          cd ..
+
+      - name: Deploy Configuration Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_CONFIGURATION }} \
+            --zip-file fileb://configuration.zip
