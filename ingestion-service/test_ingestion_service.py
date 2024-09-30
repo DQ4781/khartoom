@@ -1,5 +1,9 @@
+import os
 import json
 from ingestion import lambda_handler
+
+os.environ["AWS_REGION"] = "us-west-2"
+os.environ["AWS_DEFAULT_REGION"] = "us-west-2"
 
 
 def test_ingestion_service():

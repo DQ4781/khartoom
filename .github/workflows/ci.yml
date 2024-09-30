@@ -28,6 +28,7 @@ jobs:
       - name: Set AWS Region
         run: |
           export AWS_DEFAULT_REGION=us-west-2
+          export AWS_REGION=us-west-2
 
       - name: Run Configuration Service Lambda Tests
         run: |
