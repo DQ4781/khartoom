@@ -7,12 +7,12 @@ table = dynamodb.Table("UserConfiguration")
 
 
 def lambda_handler(event, context):
-    body = json.loads(event["body"])
-    user_id = body["UserID"]
-    s3_bucket = body["S3BucketName"]
-    jq_expression = body["JQExpression"]
-
     try:
+        body = json.loads(event["body"])
+        user_id = body["UserID"]
+        s3_bucket = body["S3BucketName"]
+        jq_expression = body["JQExpression"]
+
         table.put_item(
             Item={
                 "UserID": user_id,
@@ -22,6 +22,7 @@ def lambda_handler(event, context):
         )
         return {"statusCode": 200, "body": json.dumps("Configuration saved!")}
     except Exception as e:
+        print(f"Error: {str(e)}")
         return {
             "statusCode": 500,
             "body": json.dumps(f"Error saving configuration: {str(e)}"),
