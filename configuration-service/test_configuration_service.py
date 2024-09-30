@@ -5,12 +5,15 @@ from configuration import lambda_handler
 from moto import mock_aws
 
 
-os.environ["AWS_REGION"] = "us-west-2"
-os.environ["AWS_DEFAULT_REGION"] = "us-west-2"
-
-
 @mock_aws
 def test_save_configuration():
+    # Mock AWS credentials
+    os.environ["AWS_ACCESS_KEY_ID"] = "testing"
+    os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
+    os.environ["AWS_SECURITY_TOKEN"] = "testing"
+    os.environ["AWS_SESSION_TOKEN"] = "testing"
+    os.environ["AWS_DEFAULT_REGION"] = "us-west-2"
+
     # Create a mock DynamoDB instance
     dynamodb = boto3.resource("dynamodb", region_name="us-west-2")
 
