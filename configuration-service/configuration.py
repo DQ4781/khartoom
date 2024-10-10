@@ -10,13 +10,13 @@ def lambda_handler(event, context):
     try:
         body = json.loads(event["body"])
         user_id = body["UserID"]
-        s3_bucket = body["S3BucketName"]
+        s3_bucket = body["S3BucketARN"]
         jq_expression = body["JQExpression"]
 
         table.put_item(
             Item={
                 "UserID": user_id,
-                "S3BucketName": s3_bucket,
+                "S3BucketARN": s3_bucket,
                 "JQExpression": jq_expression,
             }
         )
