@@ -23,18 +23,20 @@ def lambda_handler(event, context):
             }
 
         config = response["Item"]
-        s3_bucket = config["S3BucketName"]
+        s3_bucket = config["S3BucketARN"]
         jq_expression = config["JQExpression"]
 
         # Log the data and configuration for now
         print(f"Received data: {data}")
-        print(f"User config: S3 Bucket = {s3_bucket}, JQ Expression = {jq_expression}")
+        print(
+            f"User config: S3 Bucket ARN = {s3_bucket}, JQ Expression = {jq_expression}"
+        )
 
         # Prepare payload for transformation lambda
         transformation_payload = {
             "data": data,
             "JQExpression": jq_expression,
-            "S3BucketName": s3_bucket,
+            "S3BucketARN": s3_bucket,
         }
 
         # Invoke transformation lambda
