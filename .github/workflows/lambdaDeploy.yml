@@ -120,5 +120,5 @@ jobs:
       - name: Deploy Delivery Lambda
         run: |
           aws lambda update-function-code \
-            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_TRANSFORMATION }} \
+            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_DELIVERY }} \
             --zip-file fileb://delivery.zip
