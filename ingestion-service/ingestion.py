@@ -41,7 +41,7 @@ def lambda_handler(event, context):
 
         # Invoke transformation lambda
         lambda_response = lambda_client.invoke(
-            FunctionName="transformationFunction",
+            FunctionName="transformationFunctionImage",
             InvocationType="RequestResponse",
             Payload=json.dumps(transformation_payload),
         )
