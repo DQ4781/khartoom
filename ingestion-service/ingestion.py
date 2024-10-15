@@ -8,6 +8,9 @@ table = dynamodb.Table("UserConfiguration")
 lambda_client = boto3.client("lambda")
 
 
+# This is a comment
+
+
 def lambda_handler(event, context):
     body = json.loads(event["body"])
     user_id = body["UserID"]

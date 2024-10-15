@@ -3,7 +3,7 @@ name: Deploy to Multiple Lambdas
 on:
   push:
     branches:
-      - danque # Change this to main when merging
+      - demo # Change this to main when merging
     paths: # Only trigger deployments if there are changes in the specific folders
       - "ingestion-service/**"
       - "configuration-service/**"

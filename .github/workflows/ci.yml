@@ -3,10 +3,10 @@ name: CI Pipeline
 on:
   push:
     branches:
-      - danque # TODO: switch to main when merging
+      - demo # TODO: switch to main when merging
   pull_request:
     branches:
-      - danque # TODO: switch to main when merging
+      - demo # TODO: switch to main when merging
 
 jobs:
   build:
