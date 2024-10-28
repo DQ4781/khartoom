@@ -30,7 +30,12 @@ jobs:
           export AWS_DEFAULT_REGION=us-west-2
           export AWS_REGION=us-west-2
 
-          # TODO: uncomment this & get UTs to mock AWS properly
+      - name: Debug AWS Region
+        run: |
+          echo "AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION"
+          echo "AWS_REGION: $AWS_REGION"
+
+      # TODO: uncomment this & get UTs to mock AWS properly
       # - name: Run Configuration Service Lambda Tests
       #   run: |
       #     cd configuration-service
