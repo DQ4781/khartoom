@@ -9,9 +9,12 @@ lambda_client = boto3.client("lambda")
 
 
 def lambda_handler(event, context):
-    body = json.loads(event["body"])
-    user_id = body["UserID"]
-    data = body["data"]
+    try:
+        body = json.loads(event["body"])
+        user_id = body["UserID"]
+        data = body["data"]
+    except (json.JSONDecodeError, KeyError) as e:
+        return {"statusCode": 400, "body": json.dumps(f"Invalid request: {str(e)}")}
 
     # Fetch configuration from our DynamoDB table
     try:
