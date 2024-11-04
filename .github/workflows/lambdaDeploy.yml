@@ -9,8 +9,8 @@ on:
       - "configuration-service/**"
       - "transformation-service/**"
       - "delivery-service/**"
-      - "apikeygen-service/**"
-      - "apiauth-service/**"
+      # - "apikeygen-service/**"
+      # - "apiauth-service/**"
 
 jobs:
   ###############################
