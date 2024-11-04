@@ -3,12 +3,13 @@ name: Deploy to Multiple Lambdas
 on:
   push:
     branches:
-      - danque # Change this to main when merging
+      - v2 # Change this to main when merging
     paths: # Only trigger deployments if there are changes in the specific folders
       - "ingestion-service/**"
       - "configuration-service/**"
       - "transformation-service/**"
       - "delivery-service/**"
+      - "apikeygen-service/**"
 
 jobs:
   ###############################
@@ -133,3 +134,31 @@ jobs:
           aws lambda update-function-code \
             --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_DELIVERY }} \
             --zip-file fileb://delivery.zip
+
+  ###############################
+  #   API Key Gen Service
+  ###############################
+  deploy-apikeygen:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Zip APIKeyGen Lambda
+        run: |
+          cd apikeygen-service
+          zip -r ../apikeygen.zip
+          cd ..
+
+      - name: Deploy APIKeyGen Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_APIKEYGEN }} \
+            --zip-file fileb://apikeygen.zip
