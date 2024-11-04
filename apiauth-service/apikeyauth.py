@@ -23,6 +23,7 @@ def lambda_handler(event, context):
                 "Invalid request format. Please provide valid JSON in body"
             ),
         }
+    # TODO: santianize email/pass entries
     email = body.get("email")
     password = body.get("password")
 
