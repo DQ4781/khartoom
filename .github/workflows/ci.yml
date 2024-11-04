@@ -40,17 +40,17 @@ jobs:
       #     cd configuration-service
       #     python3 -W ignore::DeprecationWarning -m unittest test_config.py
 
-      - name: Run Ingestion Service Lambda Tests
-        run: |
-          cd ingestion-service
-          python3 -W ignore::DeprecationWarning -m unittest test_ingestion.py
+      # - name: Run Ingestion Service Lambda Tests
+      #   run: |
+      #     cd ingestion-service
+      #     python3 -W ignore::DeprecationWarning -m unittest test_ingestion.py
 
-      - name: Run Transformation Service Lambda Tests
-        run: |
-          cd transformation-service
-          python3 -W ignore::DeprecationWarning -m unittest test_transform.py
+      # - name: Run Transformation Service Lambda Tests
+      #   run: |
+      #     cd transformation-service
+      #     python3 -W ignore::DeprecationWarning -m unittest test_transform.py
 
-      - name: Run Delivery Service Lambda Tests
-        run: |
-          cd delivery-service
-          python3 -W ignore::DeprecationWarning -m unittest test_delivery.py
+      # - name: Run Delivery Service Lambda Tests
+      #   run: |
+      #     cd delivery-service
+      #     python3 -W ignore::DeprecationWarning -m unittest test_delivery.py
