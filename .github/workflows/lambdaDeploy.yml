@@ -3,14 +3,17 @@ name: Deploy to Multiple Lambdas
 on:
   push:
     branches:
-      - v2 # Change this to main when merging
-    paths: # Only trigger deployments if there are changes in the specific folders
+      - v2 # Replace with the correct branch you’re using
+    paths:
       - "ingestion-service/**"
       - "configuration-service/**"
       - "transformation-service/**"
       - "delivery-service/**"
-      # - "apikeygen-service/**"
-      # - "apiauth-service/**"
+      - "apikeygen-service/**"
+      - "apiauth-service/**"
+  pull_request:
+    branches:
+      - v2
 
 jobs:
   ###############################
