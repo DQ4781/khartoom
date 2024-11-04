@@ -10,6 +10,7 @@ on:
       - "transformation-service/**"
       - "delivery-service/**"
       - "apikeygen-service/**"
+      - "apiauth-service/**"
 
 jobs:
   ###############################
@@ -188,7 +189,7 @@ jobs:
 
       - name: Zip APIKeyAuth Lambda
         run: |
-          cd apikeyauth-service
+          cd apiauth-service
           zip -r ../apikeyauth.zip .
           cd ..
 
