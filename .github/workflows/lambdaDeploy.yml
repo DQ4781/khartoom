@@ -154,7 +154,7 @@ jobs:
       - name: Zip APIKeyGen Lambda
         run: |
           cd apikeygen-service
-          zip -r ../apikeygen.zip
+          zip -r ../apikeygen.zip .
           cd ..
 
       - name: Deploy APIKeyGen Lambda
