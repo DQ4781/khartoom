@@ -9,11 +9,6 @@ on:
       - "configuration-service/**"
       - "transformation-service/**"
       - "delivery-service/**"
-      - "apikeygen-service/**"
-      - "apiauth-service/**"
-  pull_request:
-    branches:
-      - v2
 
 jobs:
   ###############################
