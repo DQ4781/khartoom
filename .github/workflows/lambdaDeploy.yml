@@ -4,13 +4,6 @@ on:
   push:
     branches:
       - v2 # Replace with the correct branch you’re using
-    paths:
-      - "ingestion-service/**"
-      - "configuration-service/**"
-      - "transformation-service/**"
-      - "delivery-service/**"
-      - "apikeygen-service/**"
-      - "apiauth-service/**"
   pull_request:
     branches:
       - v2
