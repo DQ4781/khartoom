@@ -3,12 +3,11 @@ name: CI Pipeline
 on:
   push:
     branches:
-      - v2 # TODO: switch to main when merging
+      - v2-workflow-bug # TODO: switch to main when merging
   pull_request:
     branches:
-      - v2 # TODO: switch to main when merging
+      - v2-workflow-bug # TODO: switch to main when merging
 
-      # Trigger build
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -55,3 +54,189 @@ jobs:
       #   run: |
       #     cd delivery-service
       #     python3 -W ignore::DeprecationWarning -m unittest test_delivery.py
+
+  ###############################
+  #   Ingestion Service
+  ###############################
+  deploy-ingestion:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Zip Ingestion Lambda
+        run: |
+          cd ingestion-service
+          zip -r ../ingestion.zip .
+          cd ..
+
+      - name: Deploy Ingestion Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_INGESTION }} \
+            --zip-file fileb://ingestion.zip
+
+  ###############################
+  #   Configuration Service
+  ###############################
+  deploy-configuration:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Zip Configuration Lambda
+        run: |
+          cd configuration-service
+          zip -r ../configuration.zip .
+          cd ..
+
+      - name: Deploy Configuration Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_CONFIGURATION }} \
+            --zip-file fileb://configuration.zip
+
+  ###############################
+  #   Transformation Service
+  ###############################
+  deploy-transformation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Authenticate Docker with AWS
+        run: |
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-west-2.amazonaws.com
+
+      - name: Build Docker Image
+        run: |
+          cd transformation-service
+          docker build --platform linux/amd64 -t my-transformation-lambda .
+
+      - name: Tag Docker Image
+        run: |
+          docker tag my-transformation-lambda:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION}}.amazonaws.com/my-transformation-lambda:latest
+
+      - name: Push Docker Image
+        run: |
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION}}.amazonaws.com/my-transformation-lambda:latest
+
+      - name: Update Transformation Lambda with ECR Image
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_TRANSFORMATION_IMAGE}} \
+            --image-uri ${{ secrets.AWS_ACCOUNT_ID}}.dkr.ecr.${{ secrets.AWS_REGION}}.amazonaws.com/my-transformation-lambda:latest
+
+  ###############################
+  #   Delivery Service
+  ###############################
+  deploy-delivery:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Zip Delivery Lambda
+        run: |
+          cd delivery-service
+          zip -r ../delivery.zip .
+          cd ..
+
+      - name: Deploy Delivery Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_DELIVERY }} \
+            --zip-file fileb://delivery.zip
+
+  ###############################
+  #   API Key Gen Service
+  ###############################
+  deploy-apikeygen:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Zip APIKeyGen Lambda
+        run: |
+          cd apikeygen-service
+          zip -r ../apikeygen.zip .
+          cd ..
+
+      - name: Deploy APIKeyGen Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_APIKEYGEN }} \
+            --zip-file fileb://apikeygen.zip
+
+  ###############################
+  #   API Key Authenticator Service
+  ###############################
+  deploy-apikeyauth:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Set environment variables
+        env:
+          USER_POOL_ID: ${{ secrets.USER_POOL_ID}}
+          APP_CLIENT_ID: ${{ secrets.APP_CLIENT_ID}}
+        run: |
+          echo "User Pool ID and App Client ID are set as env vars"
+
+      - name: Zip APIKeyAuth Lambda
+        run: |
+          cd apiauth-service
+          zip -r ../apikeyauth.zip .
+          cd ..
+
+      - name: Deploy APIKeyAuth Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_APIKEYAUTH }} \
+            --zip-file fileb://apikeyauth.zip
