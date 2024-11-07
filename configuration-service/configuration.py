@@ -6,7 +6,7 @@ import json
 import boto3
 
 dynamodb = boto3.resource("dynamodb", region_name=os.getenv("AWS_REGION", "us-west-2"))
-user_config_table = dynamodb.Table("UserConfiguration")
+user_config_table = dynamodb.Table("UserConfigurationTable")
 api_key_table = dynamodb.Table("UserAPIKeyTable")
 
 

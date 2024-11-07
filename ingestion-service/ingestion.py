@@ -5,7 +5,7 @@ import json
 import boto3
 
 dynamodb = boto3.resource("dynamodb")
-user_config_table = dynamodb.Table("UserConfiguration")
+user_config_table = dynamodb.Table("UserConfigurationTable")
 api_key_table = dynamodb.Table("UserAPIKeyTable")
 
 
