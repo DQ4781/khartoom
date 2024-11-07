@@ -62,7 +62,7 @@ jobs:
       - name: Deploy Configuration Lambda
         run: |
           aws lambda update-function-code \
-            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_V2_CONFIGURATION }} \
+            --function-name ${{ secrets.LAMBDA_FUNCTION_V2_CONFIGURATION }} \
             --zip-file fileb://configuration.zip
 
   ###############################
