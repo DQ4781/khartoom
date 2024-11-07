@@ -183,6 +183,12 @@ jobs:
         run: |
           echo "User Pool ID and App Client ID are set as env vars"
 
+      - name: Set env vars for APIKeyAuth Lambda
+        run: |
+          aws lambda update-function-configuration \
+          --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_APIKEYAUTH }} \
+          --environment "Variables={USER_POOL_ID=us-west-2_O6K0QCAdp, APP_CLIENT_ID=574ridvkduporkm1s1b7a37sne}"
+
       - name: Zip APIKeyAuth Lambda
         run: |
           cd apiauth-service
@@ -194,9 +200,3 @@ jobs:
           aws lambda update-function-code \
             --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_APIKEYAUTH }} \
             --zip-file fileb://apikeyauth.zip
-
-      - name: Set env vars for APIKeyAuth Lambda
-        run: |
-          aws lambda update-function-configuration \
-          --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_APIKEYAUTH }} \
-          --environment "Variables={USER_POOL_ID=us-west-2_O6K0QCAdp, APP_CLIENT_ID=574ridvkduporkm1s1b7a37sne}"
