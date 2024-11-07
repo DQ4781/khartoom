@@ -4,7 +4,7 @@ import json
 
 # Initialize DynamoDB client
 dynamodb = boto3.resource("dynamodb")
-table = dynamodb.Table("UserAPIKeys")
+table = dynamodb.Table("UserAPIKeyTable")
 
 
 def lambda_handler(event, context):
