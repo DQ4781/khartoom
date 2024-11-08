@@ -34,7 +34,7 @@ jobs:
       - name: Deploy Ingestion Lambda
         run: |
           aws lambda update-function-code \
-            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_V2_INGESTION }} \
+            --function-name ${{ secrets.PROD_V2_INGEST_LAMBDA }} \
             --zip-file fileb://ingestion.zip
 
   ###############################
@@ -62,7 +62,7 @@ jobs:
       - name: Deploy Configuration Lambda
         run: |
           aws lambda update-function-code \
-            --function-name ${{ secrets.LAMBDA_FUNCTION_V2_CONFIGURATION }} \
+            --function-name ${{ secrets.PROD_V2_CONFIG_LAMBDA }} \
             --zip-file fileb://configuration.zip
 
   ###############################
@@ -101,7 +101,7 @@ jobs:
       - name: Update Transformation Lambda with ECR Image
         run: |
           aws lambda update-function-code \
-            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_TRANSFORMATION_IMAGE}} \
+            --function-name ${{ secrets.PROD_TRANSFORM_LAMBDA}} \
             --image-uri ${{ secrets.AWS_ACCOUNT_ID}}.dkr.ecr.${{ secrets.AWS_REGION}}.amazonaws.com/my-transformation-lambda:latest
 
   ###############################
@@ -129,7 +129,7 @@ jobs:
       - name: Deploy Delivery Lambda
         run: |
           aws lambda update-function-code \
-            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_DELIVERY }} \
+            --function-name ${{ secrets.PROD_DELIVERY_LAMBDA }} \
             --zip-file fileb://delivery.zip
 
   ###############################
@@ -157,7 +157,7 @@ jobs:
       - name: Deploy APIKeyGen Lambda
         run: |
           aws lambda update-function-code \
-            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_APIKEYGEN }} \
+            --function-name ${{ secrets.PROD_APIKEYGEN_LAMBDA }} \
             --zip-file fileb://apikeygen.zip
 
   ###############################
@@ -186,7 +186,7 @@ jobs:
       - name: Set env vars for APIKeyAuth Lambda
         run: |
           aws lambda update-function-configuration \
-          --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_APIKEYAUTH }} \
+          --function-name ${{ secrets.PROD_APIKEYAUTH_LAMBDA }} \
           --environment "Variables={USER_POOL_ID=us-west-2_O6K0QCAdp, APP_CLIENT_ID=574ridvkduporkm1s1b7a37sne}"
 
       - name: Zip APIKeyAuth Lambda
@@ -198,5 +198,5 @@ jobs:
       - name: Deploy APIKeyAuth Lambda
         run: |
           aws lambda update-function-code \
-            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_APIKEYAUTH }} \
+            --function-name ${{ secrets.PROD_APIKEYAUTH_LAMBDA }} \
             --zip-file fileb://apikeyauth.zip
