@@ -223,6 +223,10 @@ jobs:
           --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_INGESTIONPREPROCESSOR }} \
           --environment "Variables={QUEUE_URL=${{secrets.QUEUE_URL}}, BUCKET=${{secrets.BUCKET}}}"
 
+      # Add a wait/sleep to ensure update has time to propagate
+      - name: Wait for Lambda to update to complete
+        run: sleep 10 # wait for 10 seconds
+
       - name: Zip Preprocessor Lambda
         run: |
           cd preprocessor-service
