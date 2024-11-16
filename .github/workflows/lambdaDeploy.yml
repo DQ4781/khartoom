@@ -139,7 +139,7 @@ jobs:
         run: |
           echo "User Pool ID and App Client ID are set as env vars"
       - name: Set env vars for APIKeyAuth Lambda
-        run: >
+        run: |
           aws lambda update-function-configuration \
           --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_APIKEYAUTH }} \
           --environment "Variables={USER_POOL_ID=${{ secrets.USER_POOL_ID}}, APP_CLIENT_ID=${{ secrets.APP_CLIENT_ID}}}"
@@ -165,7 +165,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
       - name: Set env vars for Preprocessor Lambda
-        run: >
+        run: |
           aws lambda update-function-configuration \
           --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_INGESTIONPREPROCESSOR }} \
           --environment "Variables={QUEUE_URL=${{secrets.QUEUE_URL}}, BUCKET=${{secrets.BUCKET}}}"
