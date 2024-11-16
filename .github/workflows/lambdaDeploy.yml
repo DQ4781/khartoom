@@ -3,10 +3,10 @@ name: Deploy to Multiple Lambdas
 on:
   push:
     branches:
-      - v2 # Replace with the correct branch you’re using
+      - v2-async # Replace with the correct branch you’re using
   pull_request:
     branches:
-      - v2
+      - v2-async
 
 jobs:
   ###############################
@@ -34,7 +34,7 @@ jobs:
       - name: Deploy Ingestion Lambda
         run: |
           aws lambda update-function-code \
-            --function-name ${{ secrets.PROD_V2_INGEST_LAMBDA }} \
+            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_V2_INGESTION }} \
             --zip-file fileb://ingestion.zip
 
   ###############################
@@ -62,7 +62,7 @@ jobs:
       - name: Deploy Configuration Lambda
         run: |
           aws lambda update-function-code \
-            --function-name ${{ secrets.PROD_V2_CONFIG_LAMBDA }} \
+            --function-name ${{ secrets.LAMBDA_FUNCTION_V2_CONFIGURATION }} \
             --zip-file fileb://configuration.zip
 
   ###############################
@@ -101,7 +101,7 @@ jobs:
       - name: Update Transformation Lambda with ECR Image
         run: |
           aws lambda update-function-code \
-            --function-name ${{ secrets.PROD_TRANSFORM_LAMBDA}} \
+            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_TRANSFORMATION_IMAGE}} \
             --image-uri ${{ secrets.AWS_ACCOUNT_ID}}.dkr.ecr.${{ secrets.AWS_REGION}}.amazonaws.com/my-transformation-lambda:latest
 
   ###############################
@@ -129,7 +129,7 @@ jobs:
       - name: Deploy Delivery Lambda
         run: |
           aws lambda update-function-code \
-            --function-name ${{ secrets.PROD_DELIVERY_LAMBDA }} \
+            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_DELIVERY }} \
             --zip-file fileb://delivery.zip
 
   ###############################
@@ -157,7 +157,7 @@ jobs:
       - name: Deploy APIKeyGen Lambda
         run: |
           aws lambda update-function-code \
-            --function-name ${{ secrets.PROD_APIKEYGEN_LAMBDA }} \
+            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_APIKEYGEN }} \
             --zip-file fileb://apikeygen.zip
 
   ###############################
@@ -186,8 +186,8 @@ jobs:
       - name: Set env vars for APIKeyAuth Lambda
         run: |
           aws lambda update-function-configuration \
-          --function-name ${{ secrets.PROD_APIKEYAUTH_LAMBDA }} \
-          --environment "Variables={USER_POOL_ID=us-west-2_O6K0QCAdp, APP_CLIENT_ID=574ridvkduporkm1s1b7a37sne}"
+          --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_APIKEYAUTH }} \
+          --environment "Variables={USER_POOL_ID=${{ secrets.USER_POOL_ID}}, APP_CLIENT_ID=${{ secrets.APP_CLIENT_ID}}}"
 
       - name: Zip APIKeyAuth Lambda
         run: |
@@ -198,5 +198,39 @@ jobs:
       - name: Deploy APIKeyAuth Lambda
         run: |
           aws lambda update-function-code \
-            --function-name ${{ secrets.PROD_APIKEYAUTH_LAMBDA }} \
+            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_APIKEYAUTH }} \
             --zip-file fileb://apikeyauth.zip
+
+  ###############################
+  #   Preprocessor Service
+  ###############################
+  deploy-preprocessor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Set env vars for Preprocessor Lambda
+        run: |
+          aws lambda update-function-configuration \
+          --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_INGESTIONPREPROCESSOR }} \
+          --environment "Variables={QUEUE_URL=${{secrets.QUEUE_URL}}, BUCKET=${{secrets.BUCKET}}}"
+
+      - name: Zip Preprocessor Lambda
+        run: |
+          cd preprocessor-service
+          zip -r ../preprocessor.zip .
+          cd ..
+
+      - name: Deploy Preprocessor Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_INGESTIONPREPROCESSOR }} \
+            --zip-file fileb://preprocessor.zip
