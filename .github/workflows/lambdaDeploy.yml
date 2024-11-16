@@ -3,10 +3,10 @@ name: Deploy to Multiple Lambdas
 on:
   push:
     branches:
-      - v2-async # Replace with the correct branch you’re using
+      - v2-asynch # Replace with the correct branch you’re using
   pull_request:
     branches:
-      - v2-async
+      - v2-asynch
 
 jobs:
   ###############################
