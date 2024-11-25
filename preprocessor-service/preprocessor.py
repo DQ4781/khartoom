@@ -18,7 +18,7 @@ BUCKET = os.getenv("BUCKET")
 def lambda_handler(event, context):
     try:
         body = json.loads(event["body"])
-        email = body.get("Email")
+        email = sanitize_email(body.get("Email"))
         api_key = body.get("APIKey")
         data = body.get("Data")
 
@@ -96,4 +96,16 @@ def generate_s3_url(body, email):
         return f"s3://{BUCKET}/{key}"
     except Exception as e:
         print(f"Error storing data for email: {email} in S3: {e}\nFor message: {body}")
+        return None
+
+
+def sanitize_email(email):
+    if not email:
+        return None
+    email = email.strip()
+    try:
+        local_part, domain_part = email.rsplit("@", 1)
+        sanitized_email = f"{local_part}@{domain_part.lower()}"
+        return sanitized_email
+    except ValueError:
         return None

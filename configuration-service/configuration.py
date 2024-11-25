@@ -13,7 +13,7 @@ api_key_table = dynamodb.Table("UserAPIKeyTable")
 def lambda_handler(event, context):
     try:
         body = json.loads(event["body"])
-        email = body.get("Email")
+        email = sanitize_email(body.get("Email"))
         api_key = body.get("APIKey")
         s3_bucket = body.get("S3BucketARN")
         jq_expression = body.get("JQExpression")
@@ -60,3 +60,15 @@ def validate_api_key(api_key, email):
     except Exception as e:
         print(f"Error validating API key: {e}")
         return False
+
+
+def sanitize_email(email):
+    if not email:
+        return None
+    email = email.strip()
+    try:
+        local_part, domain_part = email.rsplit("@", 1)
+        sanitized_email = f"{local_part}@{domain_part.lower()}"
+        return sanitized_email
+    except ValueError:
+        return None

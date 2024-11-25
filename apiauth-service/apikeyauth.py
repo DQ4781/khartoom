@@ -24,7 +24,7 @@ def lambda_handler(event, context):
             ),
         }
     # TODO: santianize email/pass entries
-    email = body.get("email")
+    email = sanitize_email(body.get("email"))
     password = body.get("password")
 
     if not email or not password:
@@ -71,4 +71,16 @@ def get_api_key(email):
         return None
     except Exception as e:
         print(f"Error fetching API key from DDB: {e}")
+        return None
+
+
+def sanitize_email(email):
+    if not email:
+        return None
+    email = email.strip()
+    try:
+        local_part, domain_part = email.rsplit("@", 1)
+        sanitized_email = f"{local_part}@{domain_part.lower()}"
+        return sanitized_email
+    except ValueError:
         return None
