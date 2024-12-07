@@ -9,11 +9,25 @@ s3_client = boto3.client("s3")
 
 def lambda_handler(event, context):
     try:
+        print(f"Recieved event: {json.dumps(event, indent=4)}")
+
+        if "Records" not in event:
+            print(f"Event does not contain 'Records': {event}")
+            return {
+                "statusCode": 400,
+                "body": json.dumps("Invalid event structure: 'Records' field missing"),
+            }
+
         for record in event["Records"]:
             print(f"Processing SQS message: {record}")
 
             # Parse the SQS message body
-            message_body = json.loads(record["body"])
+            try:
+                message_body = json.loads(record["body"])
+            except (KeyError, json.JSONDecodeError) as e:
+                print(f"Error parsing message body: {e}")
+                continue
+
             email = message_body.get("Email")
             api_key = message_body.get("APIKey")
             s3_url = message_body.get("S3Url")
