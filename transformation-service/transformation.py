@@ -4,17 +4,27 @@ import boto3
 import shlex
 
 lambda_client = boto3.client("lambda")
+s3_client = boto3.client("s3")
 
 
 def lambda_handler(event, context):
     try:
-        # Extract the incoming data and transformation expression from the event
-        data = event["data"]
+        # Log SNS event/message
+        print(f"Receieved event: {event}")
+
+        if "S3Url" in event:
+            print(f"S3 URL detected in message: {event['S3Url']}")
+            data = fetch_data_from_s3(event["S3Url"])
+        else:
+            print("No S3 URL detected. Using raw data from event")
+            data = event["data"]
+
         jq_expression = event["JQExpression"]
         s3_arn = event["S3BucketARN"]
 
-        # Log the incoming data
-        print(f"Received data: {data}")
+        if not jq_expression or s3_arn:
+            raise ValueError("Missing required JQExpression or S3BucketARN")
+
         print(f"Using jq expression: {jq_expression}")
 
         # Escape the JSON data for safe execution in shell
@@ -80,3 +90,33 @@ def lambda_handler(event, context):
             "statusCode": 500,
             "body": json.dumps(f"Error during transformation: {str(e)}"),
         }
+
+
+def fetch_data_from_s3(s3_url):
+    try:
+        print(f"Fetching data from S3 URL: {s3_url}")
+
+        bucket_name, key = parse_s3_url(s3_url)
+        print(f"Bucket: {bucket_name}, Key: {key}")
+
+        # Download file from S3
+        local_file_path = "/tmp/s3_data.json"
+        s3_client.download_file(bucket_name, key, local_file_path)
+        print(f"File downloaded to {local_file_path}")
+
+        # Load JSON from file
+        with open(local_file_path, "r") as f:
+            data = json.load(f)
+        return data
+    except Exception as e:
+        print(f"Error fetching data from S3: {str(e)}")
+        raise
+
+
+def parse_s3_url(s3_url):
+    """Parse the S3 URL into bucket name and object key."""
+    if not s3_url.startswith("s3://"):
+        raise ValueError("Invalid S3 URL format")
+    _, _, bucket_name, *key_parts = s3_url.split("/")
+    key = "/".join(key_parts)
+    return bucket_name, key
