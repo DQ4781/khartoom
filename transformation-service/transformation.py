@@ -162,9 +162,9 @@ def run_jq(jq_expression, data=None, s3_url=None):
     # except json.JSONDecodeError as e:
     #    print(f"Transformed data is not valid JSON: {e}")
     #    return None
-    except Exception as e:
-        print(f"Unexpected error during jq transformation: {str(e)}")
-        return None
+    # except Exception as e:
+    #    print(f"Unexpected error during jq transformation: {str(e)}")
+    #    return None
 
 
 def invoke_delivery_lambda(payload):
