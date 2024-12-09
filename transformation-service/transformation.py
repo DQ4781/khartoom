@@ -121,9 +121,9 @@ def run_jq(jq_expression, data=None, s3_url=None):
                     print("Error: S3 file is empty.")
                     return None
 
-            # Execute jq directly on the file
+            # Execute jq directly on the file with --slurp (-s)
             jq_command = (
-                f"jq {shlex.quote(jq_expression)} {shlex.quote(local_file_path)}"
+                f"jq -s {shlex.quote(jq_expression)} {shlex.quote(local_file_path)}"
             )
             print(f"Executing jq command on file: {jq_command}")
 
@@ -134,8 +134,10 @@ def run_jq(jq_expression, data=None, s3_url=None):
             json_data = json.dumps(wrapped_data)
             escaped_json_data = shlex.quote(json_data)
 
-            # Execute jq with the JSON data piped directly
-            jq_command = f"echo {escaped_json_data} | jq {shlex.quote(jq_expression)}"
+            # Execute jq with the JSON data piped directly and --slurp (-s)
+            jq_command = (
+                f"echo {escaped_json_data} | jq -s {shlex.quote(jq_expression)}"
+            )
             print(f"Executing jq command on data: {jq_command}")
 
         else:
@@ -159,12 +161,12 @@ def run_jq(jq_expression, data=None, s3_url=None):
         error_message = e.output.decode("utf-8") if e.output else str(e)
         print(f"Error executing jq command: {error_message}")
         return None
-    # except json.JSONDecodeError as e:
-    #    print(f"Transformed data is not valid JSON: {e}")
-    #    return None
-    # except Exception as e:
-    #    print(f"Unexpected error during jq transformation: {str(e)}")
-    #    return None
+    except json.JSONDecodeError as e:
+        print(f"Transformed data is not valid JSON: {e}")
+        return None
+    except Exception as e:
+        print(f"Unexpected error during jq transformation: {str(e)}")
+        return None
 
 
 def invoke_delivery_lambda(payload):
