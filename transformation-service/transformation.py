@@ -27,49 +27,43 @@ def lambda_handler(event, context):
 
 
 def process_message(message_body):
-    """Process an individual message from SQS or direct event."""
     try:
         print(
             f"Processing message: {json.dumps(message_body)[:1000]}..."
-        )  # Truncate for readability
+        )  # Truncated log
 
+        # Extract necessary fields
         email = message_body.get("Email")
-        api_key = message_body.get("APIKey")
         s3_url = message_body.get("S3Url")
         data = message_body.get("Data")
+        jq_expression = message_body.get("JQExpression")
+        s3_bucket_arn = message_body.get("S3BucketARN")
 
-        # Validate required fields
-        if not email or not api_key:
-            print("Missing required fields: Email or APIKey in the message.")
+        # Validate fields
+        if not email or not jq_expression or not s3_bucket_arn:
+            print("Error: Missing required fields in the message.")
             return
 
-        # Check if the data is coming from S3 or is directly included in the message
+        # Run jq on S3 data if S3 URL is provided
         if s3_url:
-            print(f"Message includes S3 URL: {s3_url}. Data will be fetched from S3.")
-            transformed_data = run_jq(message_body.get("JQExpression"), s3_url=s3_url)
+            print(f"Message includes S3 URL: {s3_url}. Running jq transformation.")
+            transformed_data = run_jq(jq_expression, s3_url=s3_url)
         elif data:
-            print("Message includes raw Data. Transforming directly.")
-            transformed_data = run_jq(message_body.get("JQExpression"), data=data)
+            # Otherwise, handle inline data
+            print("Message includes raw Data. Running jq transformation.")
+            transformed_data = run_jq(jq_expression, data=data)
         else:
-            print("Message is missing both raw Data and S3Url. Skipping.")
+            print("Error: Message is missing both raw Data and S3Url.")
             return
 
         if not transformed_data:
             print("Failed to execute jq transformation.")
             return
 
-        # Extract additional required fields
-        jq_expression = message_body.get("JQExpression")
-        s3_bucket_arn = message_body.get("S3BucketARN")
-
-        if not jq_expression or not s3_bucket_arn:
-            print("Error: Missing required JQExpression or S3BucketARN in the message.")
-            return
-
         # Log the transformed data for verification
         print(
             f"Successfully transformed data: {json.dumps(transformed_data)[:1000]}..."
-        )  # Truncate for readability
+        )
 
         # Prepare payload for the delivery lambda
         delivery_payload = {
@@ -110,36 +104,53 @@ def parse_s3_url(s3_url):
 def run_jq(jq_expression, data=None, s3_url=None):
     try:
         if s3_url:
-            # If data is coming from S3, fetch it and process
-            print(f"Executing jq on data fetched from S3 URL: {s3_url}")
+            # S3 URL functionality: download the file and process with jq
+            print(f"Processing data from S3 URL: {s3_url}")
             bucket_name, key = parse_s3_url(s3_url)
             local_file_path = "/tmp/s3_data.json"
 
             # Download the S3 object to a local file
             s3_client.download_file(bucket_name, key, local_file_path)
-            print(f"Data downloaded from S3 to {local_file_path}")
+            print(f"Data downloaded from S3 to: {local_file_path}")
 
-            # Use jq directly on the file
-            jq_command = f"jq '{jq_expression}' {local_file_path}"
+            # Log the first part of the file for debugging
+            with open(local_file_path, "r") as file:
+                file_contents = file.read(1000)  # Log the first 1000 characters
+                print(f"File contents (truncated): {file_contents}")
+                if not file_contents.strip():
+                    print("Error: S3 file is empty.")
+                    return None
+
+            # Execute jq directly on the file
+            jq_command = (
+                f"jq {shlex.quote(jq_expression)} {shlex.quote(local_file_path)}"
+            )
             print(f"Executing jq command on file: {jq_command}")
+
         elif data:
-            # If data is included in the request, process it directly
-            print(f"Executing jq on inline data.")
-            json_data = json.dumps(data)
+            # Inline data functionality: process JSON directly
+            print(f"Processing inline data with jq.")
+            wrapped_data = {"users": data} if isinstance(data, list) else data
+            json_data = json.dumps(wrapped_data)
             escaped_json_data = shlex.quote(json_data)
 
-            # Use jq with the JSON data piped directly
-            jq_command = f"echo {escaped_json_data} | jq '{jq_expression}'"
+            # Execute jq with the JSON data piped directly
+            jq_command = f"echo {escaped_json_data} | jq {shlex.quote(jq_expression)}"
             print(f"Executing jq command on data: {jq_command}")
+
         else:
-            print("No valid data or S3 URL provided for jq execution.")
+            print("Error: No valid data or S3 URL provided for jq execution.")
             return None
 
         # Run the jq command
-        transformed_data = subprocess.check_output(
-            jq_command, shell=True, stderr=subprocess.STDOUT
-        ).decode("utf-8")
-        print(f"Transformed data: {transformed_data.strip()}")
+        transformed_data = (
+            subprocess.check_output(jq_command, shell=True, stderr=subprocess.STDOUT)
+            .decode("utf-8")
+            .strip()
+        )
+
+        # Log the transformed data
+        print(f"Transformed data: {transformed_data}")
 
         # Ensure the result is valid JSON
         return json.loads(transformed_data)
