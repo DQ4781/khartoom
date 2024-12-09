@@ -9,17 +9,14 @@ s3_client = boto3.client("s3")
 
 def lambda_handler(event, context):
     try:
-        print(f"Received event: {json.dumps(event, indent=4)}")
+        print(
+            f"Received event: {json.dumps(event)[:1000]}..."
+        )  # Truncate for readability
 
-        # Check for SQS-style "Records" structure
-        if "Records" in event:
-            print("Processing SQS-triggered event")
-            for record in event["Records"]:
-                process_message(json.loads(record["body"]))
-        else:
-            # Handle single event for debugging or direct invocation
-            print("Processing single event (non-SQS)")
-            process_message(event)
+        # Process the incoming payload
+        process_message(event)
+
+        return {"statusCode": 200, "body": "Transformation completed successfully"}
 
     except Exception as e:
         print(f"Error during transformation: {str(e)}")
@@ -32,29 +29,36 @@ def lambda_handler(event, context):
 def process_message(message_body):
     """Process an individual message from SQS or direct event."""
     try:
-        print(f"Processing message: {message_body}")
+        print(
+            f"Processing message: {json.dumps(message_body)[:1000]}..."
+        )  # Truncate for readability
 
         email = message_body.get("Email")
         api_key = message_body.get("APIKey")
         s3_url = message_body.get("S3Url")
         data = message_body.get("Data")
 
+        # Validate required fields
         if not email or not api_key:
             print("Missing required fields: Email or APIKey in the message.")
             return
 
-        # Fetch data from S3 if S3 URL is provided
+        # Check if the data is coming from S3 or is directly included in the message
         if s3_url:
-            print(f"Fetching data from S3 URL: {s3_url}")
-            data = fetch_data_from_s3(s3_url)
-            if not data:
-                print(f"Failed to fetch data from S3 for URL: {s3_url}")
-                return
-        elif not data:
+            print(f"Message includes S3 URL: {s3_url}. Data will be fetched from S3.")
+            transformed_data = run_jq(message_body.get("JQExpression"), s3_url=s3_url)
+        elif data:
+            print("Message includes raw Data. Transforming directly.")
+            transformed_data = run_jq(message_body.get("JQExpression"), data=data)
+        else:
             print("Message is missing both raw Data and S3Url. Skipping.")
             return
 
-        # Extract required fields for transformation
+        if not transformed_data:
+            print("Failed to execute jq transformation.")
+            return
+
+        # Extract additional required fields
         jq_expression = message_body.get("JQExpression")
         s3_bucket_arn = message_body.get("S3BucketARN")
 
@@ -62,55 +66,20 @@ def process_message(message_body):
             print("Error: Missing required JQExpression or S3BucketARN in the message.")
             return
 
-        print(f"Using jq expression: {jq_expression}")
+        # Log the transformed data for verification
+        print(
+            f"Successfully transformed data: {json.dumps(transformed_data)[:1000]}..."
+        )  # Truncate for readability
 
-        # Escape the JSON data for safe execution in shell
-        json_data = json.dumps(data)
-        escaped_json_data = shlex.quote(json_data)
-
-        # Execute the jq expression using subprocess
-        try:
-            jq_command = f"echo {escaped_json_data} | jq '{jq_expression}'"
-            print(f"Executing jq command: {jq_command}")
-            transformed_data = subprocess.check_output(
-                jq_command, shell=True, stderr=subprocess.STDOUT
-            ).decode("utf-8")
-        except subprocess.CalledProcessError as e:
-            error_message = e.output.decode("utf-8") if e.output else str(e)
-            print(f"Error executing jq command: {error_message}")
-            return
-
-        # Log the transformed data
-        print(f"Transformed data: {transformed_data}")
-
-        # Ensure transformed data is JSON-serializable
-        try:
-            transformed_data_json = json.loads(transformed_data)
-        except json.JSONDecodeError:
-            print("Transformed data is not valid JSON.")
-            return
-
-        # Prepare payload for delivery lambda
+        # Prepare payload for the delivery lambda
         delivery_payload = {
-            "TransformedData": transformed_data_json,
+            "TransformedData": transformed_data,
             "S3BucketARN": s3_bucket_arn,
         }
 
-        # Invoke Delivery lambda
-        try:
-            lambda_response = lambda_client.invoke(
-                FunctionName="deliveryFunction",
-                InvocationType="RequestResponse",
-                Payload=json.dumps(delivery_payload),
-            )
+        # Invoke the delivery lambda
+        invoke_delivery_lambda(delivery_payload)
 
-            # Log response from Delivery Lambda
-            delivery_result = json.loads(
-                lambda_response["Payload"].read().decode("utf-8")
-            )
-            print(f"Delivery result: {delivery_result}")
-        except Exception as e:
-            print(f"Error invoking Delivery Lambda: {str(e)}")
     except Exception as e:
         print(f"Error processing message: {str(e)}")
 
@@ -136,3 +105,62 @@ def parse_s3_url(s3_url):
         key = "/".join(key_parts)
         return bucket_name, key
     raise ValueError(f"Invalid S3 URL: {s3_url}")
+
+
+def run_jq(jq_expression, data=None, s3_url=None):
+    try:
+        if s3_url:
+            print(f"Executing jq on data fetched from S3 URL: {s3_url}")
+            bucket_name, key = parse_s3_url(s3_url)
+            local_file_path = "/tmp/s3_data.json"  # Temporary file for processing
+
+            # Download the S3 object to a local file
+            s3_client.download_file(bucket_name, key, local_file_path)
+            print(f"Data downloaded from S3 to {local_file_path}")
+
+            # Execute jq directly on the file to avoid large argument list errors
+            jq_command = f"jq '{jq_expression}' {shlex.quote(local_file_path)}"
+            print(f"Executing jq command on file: {jq_command}")
+        else:
+            # Escape the JSON data for safe execution in shell
+            json_data = json.dumps(data)
+            escaped_json_data = shlex.quote(json_data)
+
+            # Execute jq on the JSON data passed as a string
+            jq_command = f"echo {escaped_json_data} | jq '{jq_expression}'"
+            print(f"Executing jq command on data: {jq_command}")
+
+        # Run the jq command
+        transformed_data = subprocess.check_output(
+            jq_command, shell=True, stderr=subprocess.STDOUT
+        ).decode("utf-8")
+        print(f"Transformed data: {transformed_data}")
+
+        # Ensure the result is JSON-serializable
+        return json.loads(transformed_data)
+
+    except subprocess.CalledProcessError as e:
+        error_message = e.output.decode("utf-8") if e.output else str(e)
+        print(f"Error executing jq command: {error_message}")
+        return None
+    except json.JSONDecodeError:
+        print("Transformed data is not valid JSON.")
+        return None
+    except Exception as e:
+        print(f"Unexpected error during jq transformation: {str(e)}")
+        return None
+
+
+def invoke_delivery_lambda(payload):
+    """Invoke the delivery Lambda function."""
+    try:
+        lambda_client = boto3.client("lambda")
+        lambda_response = lambda_client.invoke(
+            FunctionName="deliveryFunction",
+            InvocationType="RequestResponse",
+            Payload=json.dumps(payload),
+        )
+        delivery_result = json.loads(lambda_response["Payload"].read().decode("utf-8"))
+        print(f"Delivery result: {delivery_result}")
+    except Exception as e:
+        print(f"Error invoking Delivery Lambda: {str(e)}")

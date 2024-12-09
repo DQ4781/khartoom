@@ -22,11 +22,16 @@ def lambda_handler(event, context):
 
             # Extract email and data or S3 URL
             email = message_body.get("Email")
+            apikey = message_body.get("APIKey")
             data = message_body.get("Data")
-            s3_url = message_body.get("S3Url")  # New logic to handle S3 URL
+            s3_url = message_body.get("S3Url")
 
             if not email:
                 print("Error: Missing required field 'Email' in message body")
+                continue
+
+            if not apikey:
+                print("Error: Missing required field 'APIKey'in message body")
                 continue
 
             # If data is not in the message body, fetch it from S3
@@ -65,9 +70,12 @@ def lambda_handler(event, context):
 
             # Prepare payload for transformation Lambda
             transformation_payload = {
-                "data": data,
+                "Email": email,
+                "APIKey": apikey,
                 "JQExpression": jq_expression,
                 "S3BucketARN": s3_bucket,
+                "Data": data,
+                "S3Url": s3_url,  # Include S3 URL if available
             }
             print("Transformation payload:", transformation_payload)
 
