@@ -47,7 +47,7 @@ def lambda_handler(event, context):
         return {"statusCode": 403, "body": json.dumps(f"Invalid API key.")}
 
     # Serialize request body to JSON string & check byte size
-    request_json = json.dumps(body)
+    request_json = json.dumps({"Email": email, "APIKey": api_key, "Data": data})
     request_size = len(request_json.encode("utf-8"))  # size in BYTES
     print(f"Request size: {request_size} bytes")
 
