@@ -122,7 +122,9 @@ def run_jq(jq_expression, data=None, s3_url=None):
             jq_command = f"jq '{jq_expression} // []' {shlex.quote(local_file_path)}"
             print(f"Executing jq command on file: {jq_command}")
         else:
-            json_data = json.dumps(data)
+            # Wrap the data in a dictionary if not already
+            wrapped_data = {"users": data} if isinstance(data, list) else data
+            json_data = json.dumps(wrapped_data)
             escaped_json_data = shlex.quote(json_data)
             jq_command = f"echo {escaped_json_data} | jq '{jq_expression} // []'"
             print(f"Executing jq command on data: {jq_command}")
