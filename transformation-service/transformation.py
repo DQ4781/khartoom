@@ -112,22 +112,19 @@ def run_jq(jq_expression, data=None, s3_url=None):
         if s3_url:
             print(f"Executing jq on data fetched from S3 URL: {s3_url}")
             bucket_name, key = parse_s3_url(s3_url)
-            local_file_path = "/tmp/s3_data.json"  # Temporary file for processing
+            local_file_path = "/tmp/s3_data.json"
 
             # Download the S3 object to a local file
             s3_client.download_file(bucket_name, key, local_file_path)
             print(f"Data downloaded from S3 to {local_file_path}")
 
-            # Execute jq directly on the file to avoid large argument list errors
-            jq_command = f"jq '{jq_expression}' {shlex.quote(local_file_path)}"
+            # Add safe default for jq processing
+            jq_command = f"jq '{jq_expression} // []' {shlex.quote(local_file_path)}"
             print(f"Executing jq command on file: {jq_command}")
         else:
-            # Escape the JSON data for safe execution in shell
             json_data = json.dumps(data)
             escaped_json_data = shlex.quote(json_data)
-
-            # Execute jq on the JSON data passed as a string
-            jq_command = f"echo {escaped_json_data} | jq '{jq_expression}'"
+            jq_command = f"echo {escaped_json_data} | jq '{jq_expression} // []'"
             print(f"Executing jq command on data: {jq_command}")
 
         # Run the jq command
@@ -136,7 +133,6 @@ def run_jq(jq_expression, data=None, s3_url=None):
         ).decode("utf-8")
         print(f"Transformed data: {transformed_data}")
 
-        # Ensure the result is JSON-serializable
         return json.loads(transformed_data)
 
     except subprocess.CalledProcessError as e:
