@@ -159,9 +159,9 @@ def run_jq(jq_expression, data=None, s3_url=None):
         error_message = e.output.decode("utf-8") if e.output else str(e)
         print(f"Error executing jq command: {error_message}")
         return None
-    except json.JSONDecodeError as e:
-        print(f"Transformed data is not valid JSON: {e}")
-        return None
+    # except json.JSONDecodeError as e:
+    #    print(f"Transformed data is not valid JSON: {e}")
+    #    return None
     except Exception as e:
         print(f"Unexpected error during jq transformation: {str(e)}")
         return None
