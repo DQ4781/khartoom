@@ -118,6 +118,11 @@ def run_jq(jq_expression, data=None, s3_url=None):
             s3_client.download_file(bucket_name, key, local_file_path)
             print(f"Data downloaded from S3 to {local_file_path}")
 
+            # Log the contents of the file for debugging (truncated for safety)
+            with open(local_file_path, "r") as f:
+                file_content = f.read()
+                print(f"File contents (truncated) for jq: {file_content[:1000]}...")
+
             # Quote the jq expression to handle shell meta-characters
             jq_command = (
                 f"jq {shlex.quote(jq_expression)} {shlex.quote(local_file_path)}"
@@ -128,6 +133,9 @@ def run_jq(jq_expression, data=None, s3_url=None):
             wrapped_data = {"users": data} if isinstance(data, list) else data
             json_data = json.dumps(wrapped_data)
             escaped_json_data = shlex.quote(json_data)
+
+            # Log the JSON data to be passed to jq (truncated for safety)
+            print(f"JSON data (truncated) for jq: {json_data[:1000]}...")
 
             # Quote the jq expression to handle shell meta-characters
             jq_command = f"echo {escaped_json_data} | jq {shlex.quote(jq_expression)}"
