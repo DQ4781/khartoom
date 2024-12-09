@@ -118,17 +118,19 @@ def run_jq(jq_expression, data=None, s3_url=None):
             s3_client.download_file(bucket_name, key, local_file_path)
             print(f"Data downloaded from S3 to {local_file_path}")
 
-            # Add safe default for jq processing and remove unnecessary quotes
-            jq_command = f"jq {jq_expression} {shlex.quote(local_file_path)}"
+            # Quote the jq expression to handle shell meta-characters
+            jq_command = (
+                f"jq {shlex.quote(jq_expression)} {shlex.quote(local_file_path)}"
+            )
             print(f"Executing jq command on file: {jq_command}")
         else:
-            # Wrap the data in a dictionary if it's a list
+            # Wrap the data in a dictionary if not already
             wrapped_data = {"users": data} if isinstance(data, list) else data
             json_data = json.dumps(wrapped_data)
             escaped_json_data = shlex.quote(json_data)
 
-            # Add safe default for jq processing and remove unnecessary quotes
-            jq_command = f"echo {escaped_json_data} | jq {jq_expression}"
+            # Quote the jq expression to handle shell meta-characters
+            jq_command = f"echo {escaped_json_data} | jq {shlex.quote(jq_expression)}"
             print(f"Executing jq command on data: {jq_command}")
 
         # Run the jq command
@@ -137,7 +139,6 @@ def run_jq(jq_expression, data=None, s3_url=None):
         ).decode("utf-8")
         print(f"Transformed data: {transformed_data}")
 
-        # Ensure the result is JSON-serializable
         return json.loads(transformed_data)
 
     except subprocess.CalledProcessError as e:
