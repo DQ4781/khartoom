@@ -121,9 +121,9 @@ def run_jq(jq_expression, data=None, s3_url=None):
                     print("Error: S3 file is empty.")
                     return None
 
-            # Execute jq directly on the file with --slurp (-s)
+            # Execute jq directly on the file
             jq_command = (
-                f"jq -s {shlex.quote(jq_expression)} {shlex.quote(local_file_path)}"
+                f"jq {shlex.quote(jq_expression)} {shlex.quote(local_file_path)}"
             )
             print(f"Executing jq command on file: {jq_command}")
 
@@ -134,10 +134,8 @@ def run_jq(jq_expression, data=None, s3_url=None):
             json_data = json.dumps(wrapped_data)
             escaped_json_data = shlex.quote(json_data)
 
-            # Execute jq with the JSON data piped directly and --slurp (-s)
-            jq_command = (
-                f"echo {escaped_json_data} | jq -s {shlex.quote(jq_expression)}"
-            )
+            # Execute jq with the JSON data piped directly
+            jq_command = f"echo {escaped_json_data} | jq {shlex.quote(jq_expression)}"
             print(f"Executing jq command on data: {jq_command}")
 
         else:
