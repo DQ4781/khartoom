@@ -2,10 +2,10 @@ name: Deploy to Multiple Lambdas
 on:
   push:
     branches:
-      - v2-asynch
+      - capstone-demo
   pull_request:
     branches:
-      - v2-asynch
+      - capstone-demo
 jobs:
   deploy-ingestion:
     runs-on: ubuntu-latest
@@ -26,7 +26,7 @@ jobs:
       - name: Deploy Ingestion Lambda
         run: |
           aws lambda update-function-code \
-            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_V2_INGESTION }} \
+            --function-name V2IngestionTEST \
             --zip-file fileb://ingestion.zip
   deploy-configuration:
     runs-on: ubuntu-latest
@@ -47,7 +47,7 @@ jobs:
       - name: Deploy Configuration Lambda
         run: |
           aws lambda update-function-code \
-            --function-name ${{ secrets.LAMBDA_FUNCTION_V2_CONFIGURATION }} \
+            --function-name V2ConfigurationTEST \
             --zip-file fileb://configuration.zip
   deploy-transformation:
     runs-on: ubuntu-latest
@@ -70,15 +70,15 @@ jobs:
           docker build --platform linux/amd64 -t my-transformation-lambda .
       - name: Tag Docker Image
         run: >
-          docker tag my-transformation-lambda:latest ${{ secrets.AWS_ACCOUNT_ID}}.dkr.ecr.${{secrets.AWS_REGION}}.amazonaws.com/my-transformation-lambda:latest
+          docker tag my-transformation-lambda:latest ${{ secrets.AWS_ACCOUNT_ID}}.dkr.ecr.${{secrets.AWS_REGION}}.amazonaws.com/my-transformation-lambda:latestTEST
       - name: Push Docker Image
         run: >
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{secrets.AWS_REGION}}.amazonaws.com/my-transformation-lambda:latest
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{secrets.AWS_REGION}}.amazonaws.com/my-transformation-lambda:latestTEST
       - name: Update Transformation Lambda with ECR Image
         run: >
           aws lambda update-function-code \
-            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_TRANSFORMATION_IMAGE}} \
-            --image-uri ${{ secrets.AWS_ACCOUNT_ID}}.dkr.ecr.${{ secrets.AWS_REGION}}.amazonaws.com/my-transformation-lambda:latest
+            --function-name transformationTEST \
+            --image-uri ${{ secrets.AWS_ACCOUNT_ID}}.dkr.ecr.${{ secrets.AWS_REGION}}.amazonaws.com/my-transformation-lambda:latestTEST
   deploy-delivery:
     runs-on: ubuntu-latest
     steps:
@@ -98,7 +98,7 @@ jobs:
       - name: Deploy Delivery Lambda
         run: |
           aws lambda update-function-code \
-            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_DELIVERY }} \
+            --function-name deliveryTEST \
             --zip-file fileb://delivery.zip
   deploy-apikeygen:
     runs-on: ubuntu-latest
@@ -167,7 +167,7 @@ jobs:
       - name: Set env vars for Preprocessor Lambda
         run: |
           aws lambda update-function-configuration \
-          --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_INGESTIONPREPROCESSOR }} \
+          --function-name preprocessorTEST \
           --environment "Variables={QUEUE_URL=${{secrets.QUEUE_URL}}, BUCKET=${{secrets.BUCKET}}}"
       - name: Wait for Lambda to update to complete
         run: sleep 10
@@ -179,5 +179,5 @@ jobs:
       - name: Deploy Preprocessor Lambda
         run: >
           aws lambda update-function-code \
-            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME_INGESTIONPREPROCESSOR }} \
+            --function-name preprocessorTEST \
             --zip-file fileb://preprocessor.zip
