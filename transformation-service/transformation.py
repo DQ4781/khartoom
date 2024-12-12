@@ -1,3 +1,6 @@
+########
+#  V2 Transformation TEST
+#########
 import json
 import subprocess
 import boto3
@@ -172,7 +175,7 @@ def invoke_delivery_lambda(payload):
     try:
         lambda_client = boto3.client("lambda")
         lambda_response = lambda_client.invoke(
-            FunctionName="deliveryFunction",
+            FunctionName="deliveryTEST",
             InvocationType="RequestResponse",
             Payload=json.dumps(payload),
         )

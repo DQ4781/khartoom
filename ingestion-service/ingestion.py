@@ -1,5 +1,5 @@
 ########
-#  V2 Ingestion (Updated)
+#  V2 Ingestion TEST
 ########
 import json
 import boto3
@@ -81,7 +81,7 @@ def lambda_handler(event, context):
 
             # Invoke transformation Lambda
             lambda_response = lambda_client.invoke(
-                FunctionName="transformationFunctionImage",
+                FunctionName="transformationTEST",
                 InvocationType="RequestResponse",
                 Payload=json.dumps(transformation_payload),
             )
