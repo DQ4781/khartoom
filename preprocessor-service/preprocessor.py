@@ -67,6 +67,7 @@ def lambda_handler(event, context):
     # If not, store in S3 bucket & pass S3 URL to SQS
     else:
         print(f"Request size exceeds 256KB. Storing in S3.")
+        request_json = json.dumps(data)
         s3_url = generate_s3_url(request_json, email)
         if s3_url:
             print(f"Data successfully stored in S3 at URL: {s3_url}")
